@@ -43,6 +43,13 @@ public class PosterFragment extends Fragment {
         GridView gridView = (GridView) rootView.findViewById(R.id.gridView);
         gridView.setAdapter(imageAdapter);
 
+       /* gridView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            @Override
+            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                Intent intent = new Intent(getActivity(), DetailActivity.class).put
+            }
+        });*/
+
         return rootView;
     }
 

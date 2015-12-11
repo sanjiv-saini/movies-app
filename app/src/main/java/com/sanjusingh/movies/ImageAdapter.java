@@ -26,12 +26,13 @@ public class ImageAdapter extends ArrayAdapter<Movie> {
         ImageView view = (ImageView) convertView;
         if (view == null) {
             view = new ImageView(context);
+            view.setAdjustViewBounds(true);
         }
 
         Movie movie = getItem(position);
         String url = movie.getPosterUrl() ;
 
-        Picasso.with(context).load(url).into(view);
+        Picasso.with(context).load(url).placeholder(R.drawable.placeholder).error(R.drawable.error).into(view);
         return view;
     }
 }
