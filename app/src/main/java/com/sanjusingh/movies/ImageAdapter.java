@@ -13,10 +13,10 @@ import java.util.List;
 /**
  * Created by sanju singh on 12/11/2015.
  */
-public class ImageAdapter extends ArrayAdapter<String> {
+public class ImageAdapter extends ArrayAdapter<Movie> {
     private Context context;
 
-    public ImageAdapter(Context c, List<String> dataSet) {
+    public ImageAdapter(Context c, List<Movie> dataSet) {
         super(c,0,dataSet);
         context = c;
     }
@@ -28,7 +28,8 @@ public class ImageAdapter extends ArrayAdapter<String> {
             view = new ImageView(context);
         }
 
-        String url = (String) getItem(position);
+        Movie movie = getItem(position);
+        String url = movie.getPosterUrl() ;
 
         Picasso.with(context).load(url).into(view);
         return view;

@@ -38,7 +38,7 @@ public class PosterFragment extends Fragment {
                              Bundle savedInstanceState) {
         View rootView = inflater.inflate(R.layout.fragment_main, container, false);
 
-        imageAdapter = new ImageAdapter(getActivity(), new ArrayList<String>());
+        imageAdapter = new ImageAdapter(getActivity(), new ArrayList<Movie>());
 
         GridView gridView = (GridView) rootView.findViewById(R.id.gridView);
         gridView.setAdapter(imageAdapter);
@@ -57,10 +57,10 @@ public class PosterFragment extends Fragment {
         fetchMovieDBTask.execute();
     }
 
-    private class FetchMovieDBTask extends AsyncTask<Void, Void, String[]>{
+    private class FetchMovieDBTask extends AsyncTask<Void, Void, Movie[]>{
 
         @Override
-        protected String[] doInBackground(Void... params) {
+        protected Movie[] doInBackground(Void... params) {
 
             final String BaseUrl = "http://api.themoviedb.org/3/discover/movie?";
 
@@ -115,44 +115,55 @@ public class PosterFragment extends Fragment {
 
             }
 
-            return getPosterLinkFromJSON(JSONStr);
+            return getMoviesFromJSON(JSONStr);
 
         }
 
         @Override
-        protected void onPostExecute(String[] result) {
+        protected void onPostExecute(Movie[] result) {
             if(result != null){
-                for(String posterUrl : result){
-                    imageAdapter.add(posterUrl);
+                for(Movie movie : result){
+                    imageAdapter.add(movie);
                 }
             }
 
         }
 
-        private String[] getPosterLinkFromJSON(String JSONStr){
+        private Movie[] getMoviesFromJSON(String JSONStr){
 
             final String BASE_URL = "http://image.tmdb.org/t/p/w185";
             final String MOVIES_RESULT = "results";
             final String POSTER_PATH = "poster_path";
-            String[] posterLinks=null;
+            final String TITLE = "original_title";
+            final String OVERVIEW = "overview";
+            final String RELEASE_DATE = "release_date";
+            final String USER_RATING = "vote_average";
+            Movie[] movies = null;
 
             try {
                 JSONObject moviesObject = new JSONObject(JSONStr);
                 JSONArray resultArray = moviesObject.getJSONArray(MOVIES_RESULT);
 
-                posterLinks = new String[resultArray.length()];
+                movies = new Movie[resultArray.length()];
 
                 for(int i=0; i < resultArray.length(); i++){
 
-                    JSONObject movie = resultArray.getJSONObject(i);
-                    posterLinks[i] = BASE_URL + movie.getString(POSTER_PATH);
+                    JSONObject movieInfo = resultArray.getJSONObject(i);
+                    //posterLinks[i] = BASE_URL + movieInfo.getString(POSTER_PATH);
+                    movies[i] = new Movie(
+                            movieInfo.getString(TITLE),
+                            movieInfo.getString(OVERVIEW),
+                            movieInfo.getString(RELEASE_DATE),
+                            movieInfo.getDouble(USER_RATING),
+                            BASE_URL + movieInfo.getString(POSTER_PATH)
+                    );
                 }
 
             } catch (JSONException e) {
                 Log.e(LOG_TAG, e.getMessage(), e);
                 e.printStackTrace();
             }
-            return posterLinks;
+            return movies;
         }
     }
 }
