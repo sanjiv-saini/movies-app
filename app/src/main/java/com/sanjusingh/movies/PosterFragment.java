@@ -4,6 +4,7 @@ import android.content.Intent;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -23,6 +24,7 @@ import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.Arrays;
 
 /**
  * Created by sanju singh on 12/11/2015.
@@ -31,6 +33,7 @@ public class PosterFragment extends Fragment {
 
     private final String LOG_TAG= PosterFragment.class.getSimpleName();
     private ImageAdapter imageAdapter = null;
+    private ArrayList<Movie> movieList = null;
 
     public PosterFragment() {
     }
@@ -40,7 +43,11 @@ public class PosterFragment extends Fragment {
                              Bundle savedInstanceState) {
         View rootView = inflater.inflate(R.layout.fragment_main, container, false);
 
-        imageAdapter = new ImageAdapter(getActivity(), new ArrayList<Movie>());
+        if(movieList != null) {
+            imageAdapter = new ImageAdapter(getActivity(), movieList);
+        } else{
+            imageAdapter = new ImageAdapter(getActivity(), new ArrayList<Movie>());
+        }
 
         GridView gridView = (GridView) rootView.findViewById(R.id.gridView);
         gridView.setAdapter(imageAdapter);
@@ -60,9 +67,28 @@ public class PosterFragment extends Fragment {
     }
 
     @Override
+    public void onSaveInstanceState(Bundle outState) {
+        if(movieList != null)
+        {
+            outState.putParcelableArrayList("movies", movieList);
+        }
+        super.onSaveInstanceState(outState);
+    }
+
+    @Override
+    public void onCreate(@Nullable Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        if(savedInstanceState != null && savedInstanceState.containsKey("movies")){
+            movieList = savedInstanceState.getParcelableArrayList("movies");
+        }
+    }
+
+    @Override
     public void onStart() {
         super.onStart();
-        updateMovies();
+        if(movieList == null) {
+            updateMovies();
+        }
     }
 
     public void updateMovies(){
@@ -135,6 +161,7 @@ public class PosterFragment extends Fragment {
         @Override
         protected void onPostExecute(Movie[] result) {
             if(result != null){
+                movieList = new ArrayList<Movie>(Arrays.asList(result));
                 for(Movie movie : result){
                     imageAdapter.add(movie);
                 }
