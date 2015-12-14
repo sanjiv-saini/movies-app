@@ -1,5 +1,6 @@
 package com.sanjusingh.movies;
 
+import android.content.Intent;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
@@ -8,6 +9,7 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.AdapterView;
 import android.widget.GridView;
 
 import org.json.JSONArray;
@@ -28,7 +30,7 @@ import java.util.ArrayList;
 public class PosterFragment extends Fragment {
 
     private final String LOG_TAG= PosterFragment.class.getSimpleName();
-    private ImageAdapter imageAdapter;
+    private ImageAdapter imageAdapter = null;
 
     public PosterFragment() {
     }
@@ -43,12 +45,16 @@ public class PosterFragment extends Fragment {
         GridView gridView = (GridView) rootView.findViewById(R.id.gridView);
         gridView.setAdapter(imageAdapter);
 
-       /* gridView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+        gridView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                Intent intent = new Intent(getActivity(), DetailActivity.class).put
+                Movie selectedMovie = imageAdapter.getItem(position);
+
+                Intent intent = new Intent(getActivity(), DetailActivity.class);
+                intent.putExtra("movie", selectedMovie);
+                startActivity(intent);
             }
-        });*/
+        });
 
         return rootView;
     }
