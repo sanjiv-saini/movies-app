@@ -36,6 +36,7 @@ public class PosterFragment extends Fragment {
     private final String LOG_TAG= PosterFragment.class.getSimpleName();
     private ImageAdapter imageAdapter = null;
     private ArrayList<Movie> movieList = null;
+    private String sortCriteria = "popularity.desc";
 
     public PosterFragment() {
     }
@@ -80,7 +81,14 @@ public class PosterFragment extends Fragment {
     @Override
     public void onStart() {
         super.onStart();
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(getActivity());
+        String  moviesOrder= prefs.getString(getString(R.string.pref_sort_criteria_key), getString(R.string.pref_criteria_most_popular));
+
         if(movieList == null) {
+            updateMovies();
+        } else if(!sortCriteria.equals(moviesOrder)){
+            sortCriteria = moviesOrder;
+            imageAdapter.clear();
             updateMovies();
         }
     }
@@ -97,18 +105,16 @@ public class PosterFragment extends Fragment {
 
 
     public void updateMovies(){
+
         FetchMovieDBTask fetchMovieDBTask = new FetchMovieDBTask();
+        fetchMovieDBTask.execute();
 
-        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(getActivity());
-        String sortCriteria = prefs.getString(getString(R.string.pref_sort_criteria_key), getString(R.string.pref_criteria_most_popular));
-
-        fetchMovieDBTask.execute(sortCriteria);
     }
 
-    private class FetchMovieDBTask extends AsyncTask<String, Void, Movie[]>{
+    private class FetchMovieDBTask extends AsyncTask<Void, Void, Movie[]>{
 
         @Override
-        protected Movie[] doInBackground(String... params) {
+        protected Movie[] doInBackground(Void... params) {
 
             final String BaseUrl = "http://api.themoviedb.org/3/discover/movie?";
 
@@ -119,7 +125,7 @@ public class PosterFragment extends Fragment {
             try{
 
                 Uri uri = Uri.parse(BaseUrl).buildUpon()
-                        .appendQueryParameter("sort_by", params[0])
+                        .appendQueryParameter("sort_by", sortCriteria)
                         .appendQueryParameter("api_key", BuildConfig.THE_MOVIE_DB_API_KEY)
                         .build();
 
@@ -171,11 +177,8 @@ public class PosterFragment extends Fragment {
         protected void onPostExecute(Movie[] result) {
             if(result != null){
                 movieList = new ArrayList<Movie>(Arrays.asList(result));
-                for(Movie movie : result){
-                    imageAdapter.add(movie);
-                }
+                imageAdapter.addAll(movieList);
             }
-
         }
 
         private Movie[] getMoviesFromJSON(String JSONStr){
@@ -214,5 +217,6 @@ public class PosterFragment extends Fragment {
             }
             return movies;
         }
+
     }
 }
