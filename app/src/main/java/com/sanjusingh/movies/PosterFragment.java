@@ -1,9 +1,11 @@
 package com.sanjusingh.movies;
 
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.preference.PreferenceManager;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
 import android.util.Log;
@@ -38,6 +40,15 @@ public class PosterFragment extends Fragment {
     public PosterFragment() {
     }
 
+
+    @Override
+    public void onCreate(@Nullable Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        if(savedInstanceState != null && savedInstanceState.containsKey("movies")){
+            movieList = savedInstanceState.getParcelableArrayList("movies");
+        }
+    }
+
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
@@ -67,6 +78,15 @@ public class PosterFragment extends Fragment {
     }
 
     @Override
+    public void onStart() {
+        super.onStart();
+        if(movieList == null) {
+            updateMovies();
+        }
+    }
+
+
+    @Override
     public void onSaveInstanceState(Bundle outState) {
         if(movieList != null)
         {
@@ -75,31 +95,20 @@ public class PosterFragment extends Fragment {
         super.onSaveInstanceState(outState);
     }
 
-    @Override
-    public void onCreate(@Nullable Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        if(savedInstanceState != null && savedInstanceState.containsKey("movies")){
-            movieList = savedInstanceState.getParcelableArrayList("movies");
-        }
-    }
-
-    @Override
-    public void onStart() {
-        super.onStart();
-        if(movieList == null) {
-            updateMovies();
-        }
-    }
 
     public void updateMovies(){
         FetchMovieDBTask fetchMovieDBTask = new FetchMovieDBTask();
-        fetchMovieDBTask.execute();
+
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(getActivity());
+        String sortCriteria = prefs.getString(getString(R.string.pref_sort_criteria_key), getString(R.string.pref_criteria_most_popular));
+
+        fetchMovieDBTask.execute(sortCriteria);
     }
 
-    private class FetchMovieDBTask extends AsyncTask<Void, Void, Movie[]>{
+    private class FetchMovieDBTask extends AsyncTask<String, Void, Movie[]>{
 
         @Override
-        protected Movie[] doInBackground(Void... params) {
+        protected Movie[] doInBackground(String... params) {
 
             final String BaseUrl = "http://api.themoviedb.org/3/discover/movie?";
 
@@ -110,7 +119,7 @@ public class PosterFragment extends Fragment {
             try{
 
                 Uri uri = Uri.parse(BaseUrl).buildUpon()
-                        .appendQueryParameter("sort_by","popularity.desc")
+                        .appendQueryParameter("sort_by", params[0])
                         .appendQueryParameter("api_key", BuildConfig.THE_MOVIE_DB_API_KEY)
                         .build();
 
