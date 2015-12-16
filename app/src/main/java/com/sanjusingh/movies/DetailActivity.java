@@ -83,8 +83,8 @@ public class DetailActivity extends ActionBarActivity {
 
             if(selectedMovie != null){
                 titleView.setText(selectedMovie.getTitle());
-                ratingView.setText("Rating: " + selectedMovie.getUserRating().toString());
-                releaseDateView.setText("Release: " + selectedMovie.getReleaseDate());
+                ratingView.setText(selectedMovie.getUserRating().toString());
+                releaseDateView.setText(selectedMovie.getReleaseDate());
                 overview.setText("OVERVIEW:\n" + selectedMovie.getOverview());
                 Picasso.with(getActivity()).load(selectedMovie.getPosterUrl()).placeholder(R.drawable.placeholder).error(R.drawable.error).into(thumbnailView);
             }

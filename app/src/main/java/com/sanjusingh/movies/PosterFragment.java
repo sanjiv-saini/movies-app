@@ -1,7 +1,10 @@
 package com.sanjusingh.movies;
 
+import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
@@ -9,11 +12,13 @@ import android.preference.PreferenceManager;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
 import android.util.Log;
+import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.GridView;
+import android.widget.Toast;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -45,8 +50,11 @@ public class PosterFragment extends Fragment {
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        if(savedInstanceState != null && savedInstanceState.containsKey("movies")){
-            movieList = savedInstanceState.getParcelableArrayList("movies");
+        if(savedInstanceState != null){
+            sortCriteria = savedInstanceState.getString("sortType");
+
+            if(savedInstanceState.containsKey("movies"))
+                movieList = savedInstanceState.getParcelableArrayList("movies");
         }
     }
 
@@ -81,16 +89,32 @@ public class PosterFragment extends Fragment {
     @Override
     public void onStart() {
         super.onStart();
+
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(getActivity());
         String  moviesOrder= prefs.getString(getString(R.string.pref_sort_criteria_key), getString(R.string.pref_criteria_most_popular));
 
-        if(movieList == null) {
-            updateMovies();
-        } else if(!sortCriteria.equals(moviesOrder)){
-            sortCriteria = moviesOrder;
-            imageAdapter.clear();
-            updateMovies();
+
+        if(isConnected()) {
+            if (!sortCriteria.equals(moviesOrder)) {
+                sortCriteria = moviesOrder;
+                imageAdapter.clear();
+                updateMovies();
+            } else if (movieList == null) {
+                updateMovies();
+            }
+        } else{
+            Toast toast = Toast.makeText(getActivity()," Check you connection and try again", Toast.LENGTH_SHORT);
+            toast.setGravity(Gravity.CENTER, 0, 0);
+            toast.show();
         }
+    }
+
+    private boolean isConnected(){
+        ConnectivityManager cm = (ConnectivityManager)getActivity().getSystemService(Context.CONNECTIVITY_SERVICE);
+
+        NetworkInfo activeNetwork = cm.getActiveNetworkInfo();
+        boolean isConnected = activeNetwork != null && activeNetwork.isConnectedOrConnecting();
+        return isConnected;
     }
 
 
@@ -100,6 +124,7 @@ public class PosterFragment extends Fragment {
         {
             outState.putParcelableArrayList("movies", movieList);
         }
+        outState.putString("sortType", sortCriteria);
         super.onSaveInstanceState(outState);
     }
 
