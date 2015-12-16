@@ -1,18 +1,14 @@
-<FrameLayout
+<ScrollView
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     tools:context="com.sanjusingh.movies.DetailActivity$PlaceholderFragment"
-    android:layout_height="match_parent"
-    android:layout_width="match_parent">
-
-    <ScrollView
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:fillViewport="true">
 
         <LinearLayout
             android:layout_width="match_parent"
-            android:layout_height="match_parent"
+            android:layout_height="wrap_content"
             android:paddingLeft="@dimen/activity_horizontal_margin"
             android:paddingRight="@dimen/activity_horizontal_margin"
             android:paddingTop="@dimen/activity_vertical_margin"
@@ -32,14 +28,15 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_gravity="center"
-                android:paddingTop="16dp"
-                android:paddingBottom="16dp">
+                android:layout_marginTop="@dimen/detailview_layout_margin"
+                android:layout_marginBottom="@dimen/detailview_layout_margin">
 
                 <ImageView
-                        android:layout_width="120dp"
-                        android:layout_height="180dp"
+                        android:layout_width="@dimen/thumbnail_width"
+                        android:layout_height="@dimen/thumbnail_height"
                         android:id="@+id/thumbnailView"
-                    android:layout_weight="0" />
+                        android:layout_weight="0"
+                        android:contentDescription="@string/detail_view_thumbnail_desc"/>
 
 
                 <LinearLayout
@@ -47,14 +44,14 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_gravity="center_vertical"
-                    android:paddingLeft="30dp"
+                    android:layout_marginLeft="@dimen/movie_details_left_margin"
                     android:layout_weight="1">
 
                     <TextView
                         android:layout_width="match_parent"
                         android:layout_height="match_parent"
                         android:textAppearance="?android:attr/textAppearanceMedium"
-                        android:textSize="50dp"
+                        android:textSize="@dimen/rating_text_size"
                         android:id="@+id/ratingView"/>
 
                     <TextView
@@ -75,5 +72,5 @@
              />
 
         </LinearLayout>
-    </ScrollView>
-</FrameLayout>
+</ScrollView>
+

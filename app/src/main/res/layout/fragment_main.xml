@@ -2,7 +2,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:padding="1dp">
+    android:padding="@dimen/main_fragment_padding">
 
 
     <GridView
@@ -10,12 +10,9 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:numColumns="auto_fit"
-        android:columnWidth="130dp"
+        android:columnWidth="@dimen/gridview_column_width"
         android:stretchMode="columnWidth"
-        android:verticalSpacing="1dp"
-        android:horizontalSpacing="1dp"
-
-        android:layout_gravity="center_horizontal|top" />
-
+        android:verticalSpacing="@dimen/grid_view_vertical_spacing"
+        android:horizontalSpacing="@dimen/grid_view_horizontal_spacing"/>
 
 </FrameLayout>

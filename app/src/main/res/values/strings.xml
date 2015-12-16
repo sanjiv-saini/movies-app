@@ -10,5 +10,6 @@
     <string name="pref_sort_criteria_label">Sort Criteria</string>
     <string name="pref_sort_criteria_key" translatable="false">sort_criteria</string>
     <string name="pref_criteria_most_popular" translatable="false">popularity.desc</string>
+    <string name="detail_view_thumbnail_desc">movie poster</string>
 
 </resources>
