@@ -2,17 +2,9 @@ package com.sanjusingh.movies;
 
 import android.content.Intent;
 import android.os.Bundle;
-import android.support.v4.app.Fragment;
 import android.support.v7.app.ActionBarActivity;
-import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
-import android.view.View;
-import android.view.ViewGroup;
-import android.widget.ImageView;
-import android.widget.TextView;
-
-import com.squareup.picasso.Picasso;
 
 
 public class DetailActivity extends ActionBarActivity {
@@ -23,7 +15,7 @@ public class DetailActivity extends ActionBarActivity {
         setContentView(R.layout.activity_detail);
         if (savedInstanceState == null) {
             getSupportFragmentManager().beginTransaction()
-                    .add(R.id.container, new PlaceholderFragment())
+                    .add(R.id.container, new DetailFragment())
                     .commit();
         }
     }
@@ -55,38 +47,5 @@ public class DetailActivity extends ActionBarActivity {
     /**
      * A placeholder fragment containing a simple view.
      */
-    public static class PlaceholderFragment extends Fragment {
 
-        public PlaceholderFragment() {
-        }
-
-        @Override
-        public View onCreateView(LayoutInflater inflater, ViewGroup container,
-                                 Bundle savedInstanceState) {
-            Movie selectedMovie = null;
-            View rootView = inflater.inflate(R.layout.fragment_detail, container, false);
-
-            Intent intent = getActivity().getIntent();
-            if((intent != null) && intent.hasExtra("movie")){
-                selectedMovie = intent.getExtras().getParcelable("movie");
-            }
-
-            TextView titleView = (TextView) rootView.findViewById(R.id.titleView);
-            TextView releaseDateView = (TextView) rootView.findViewById(R.id.releaseDateView);
-            TextView ratingView = (TextView) rootView.findViewById(R.id.ratingView);
-            TextView overview = (TextView) rootView.findViewById(R.id.overviewField);
-            ImageView thumbnailView = (ImageView) rootView.findViewById(R.id.thumbnailView);
-            thumbnailView.setAdjustViewBounds(true);
-
-            if(selectedMovie != null){
-                titleView.setText(selectedMovie.getTitle());
-                ratingView.setText(selectedMovie.getUserRating().toString());
-                releaseDateView.setText(selectedMovie.getReleaseDate());
-                overview.setText("OVERVIEW:\n" + selectedMovie.getOverview());
-                Picasso.with(getActivity()).load(selectedMovie.getPosterUrl()).placeholder(R.drawable.placeholder).error(R.drawable.error).into(thumbnailView);
-            }
-
-            return rootView;
-        }
-    }
 }

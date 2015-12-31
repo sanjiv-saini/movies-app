@@ -6,6 +6,7 @@ import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
 import android.widget.ImageView;
 
+import com.sanjusingh.movies.retrofit.model.Movie;
 import com.squareup.picasso.Picasso;
 
 import java.util.List;
@@ -23,6 +24,8 @@ public class ImageAdapter extends ArrayAdapter<Movie> {
 
     @Override
     public View getView(int position, View convertView, ViewGroup parent) {
+        String imageBaseUrl = "http://image.tmdb.org/t/p/";
+
         ImageView view = (ImageView) convertView;
         if (view == null) {
             view = new ImageView(context);
@@ -30,7 +33,7 @@ public class ImageAdapter extends ArrayAdapter<Movie> {
         }
 
         Movie movie = getItem(position);
-        String url = movie.getPosterUrl() ;
+        String url = imageBaseUrl + "w185/" + movie.getPoster_path();
 
         Picasso.with(context).load(url).placeholder(R.drawable.placeholder).error(R.drawable.error).into(view);
         return view;
