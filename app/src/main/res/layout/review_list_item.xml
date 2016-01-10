@@ -4,18 +4,25 @@
     android:layout_height="match_parent"
     android:orientation="vertical"
     android:layout_gravity="center"
-    android:showDividers="beginning|end">
+    android:showDividers="beginning|end"
+    android:padding="10dp"
+    android:background="@drawable/item_border">
 
     <TextView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:textAppearance="?android:attr/textAppearanceMedium"
+        android:text="sanju singh"
         android:id="@+id/authorNameText"
-        android:layout_gravity="right" />
+        android:layout_gravity="right"
+        android:paddingBottom="4dp"/>
 
     <TextView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:id="@+id/reviewText"
-        android:layout_gravity="right" />
+        android:layout_gravity="right"
+        android:maxLines="4"
+        android:ellipsize="end"
+        android:singleLine="false"/>
 </LinearLayout>

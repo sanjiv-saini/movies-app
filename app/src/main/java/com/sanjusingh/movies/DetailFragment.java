@@ -40,6 +40,7 @@ public class DetailFragment extends Fragment {
     private View rootView;
     private ApiService apiService = null;
     private Context context;
+    private List<Trailers> trailersList;
 
     public DetailFragment() {
     }
@@ -67,23 +68,37 @@ public class DetailFragment extends Fragment {
         TextView releaseDateView = (TextView) rootView.findViewById(R.id.releaseDateView);
         TextView ratingView = (TextView) rootView.findViewById(R.id.ratingView);
         TextView overview = (TextView) rootView.findViewById(R.id.overviewField);
-        ImageView thumbnailView = (ImageView) rootView.findViewById(R.id.thumbnailView);
         ImageView backdropView = (ImageView) rootView.findViewById(R.id.backdropView);
 
-        thumbnailView.setAdjustViewBounds(true);
-        backdropView.setAdjustViewBounds(true);
-
         String backdropUrl = imageBaseUrl + "w342/" + selectedMovie.getBackdrop_path();
-        String posterUrl = imageBaseUrl + "w185/" + selectedMovie.getPoster_path();
 
         if(selectedMovie != null){
             titleView.setText(selectedMovie.getTitle());
             ratingView.setText(selectedMovie.getVote_average().toString());
             releaseDateView.setText(selectedMovie.getRelease_date());
-            overview.setText("OVERVIEW:\n\t" + selectedMovie.getOverview());
-            Picasso.with(getActivity()).load(posterUrl).placeholder(R.drawable.placeholder).error(R.drawable.error).into(thumbnailView);
+            overview.setText(selectedMovie.getOverview());
             Picasso.with(getActivity()).load(backdropUrl).into(backdropView);
         }
+
+        final ImageView favButton = (ImageView) rootView.findViewById(R.id.favouriteButton);
+        favButton.setTag("off");
+        favButton.setImageResource(R.drawable.favourite_off);
+        favButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                favButtonHandler(favButton);
+            }
+        });
+
+        //share first trailer url through intent
+        final ImageView shareButton = (ImageView) rootView.findViewById(R.id.shareButton);
+        shareButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                startActivity(Intent.createChooser(createShareVideoIntent(), "Share via"));
+            }
+        });
+
 
         return rootView;
 
@@ -95,9 +110,11 @@ public class DetailFragment extends Fragment {
 
         final TextView statusText = (TextView) rootView.findViewById(R.id.reviewStatus);
 
+
         call.enqueue(new Callback<Data<Reviews>>() {
+
             @Override
-            public void onResponse(retrofit.Response<Data<Reviews>> response, Retrofit retrofit) {
+              public void onResponse(retrofit.Response<Data<Reviews>> response, Retrofit retrofit) {
                 Data<Reviews> data = response.body();
                 List<Reviews> reviewsList = null;
                 if(data != null){
@@ -132,11 +149,11 @@ public class DetailFragment extends Fragment {
         call.enqueue(new Callback<Data<Trailers>>() {
             @Override
             public void onResponse(retrofit.Response<Data<Trailers>> response, Retrofit retrofit) {
-                List<Trailers> trailersList = null;
                 Data<Trailers> data = response.body();
                 if(data != null){
-                    if((trailersList = data.getResults()) != null){
-                        displayTrailers(trailersList);
+                    trailersList = data.getResults();
+                    if(trailersList.size() > 0){
+                        displayTrailers();
                     } else{
                         statusText.setText("No Trailers");
                     }
@@ -157,6 +174,16 @@ public class DetailFragment extends Fragment {
         });
     }
 
+    private Intent createShareVideoIntent(){
+        Intent intent = new Intent(Intent.ACTION_SEND);
+        intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_WHEN_TASK_RESET);
+        intent.setType("text/plain");
+        String id = trailersList.get(0).getKey();
+        intent.putExtra(intent.EXTRA_TEXT, "http://www.youtube.com/watch?v="+id);
+
+        return intent;
+    }
+
     private void displayReviews(List<Reviews> reviewsList){
         if(reviewsList != null) {
             LinearLayout reviewLayout = (LinearLayout) rootView.findViewById(R.id.reviewLayout);
@@ -165,7 +192,7 @@ public class DetailFragment extends Fragment {
                 TextView authorNameText = (TextView) reviewItem.findViewById(R.id.authorNameText);
                 TextView reviewText = (TextView) reviewItem.findViewById(R.id.reviewText);
 
-                authorNameText.setText(review.getAuthor());
+                authorNameText.setText(review.getAuthor() + ":");
                 reviewText.setText(review.getContent());
 
                 reviewLayout.addView(reviewItem);
@@ -173,7 +200,7 @@ public class DetailFragment extends Fragment {
         }
     }
 
-    private void displayTrailers(List<Trailers> trailersList){
+    private void displayTrailers(){
         if(trailersList != null){
             String baseUrl = "http://img.youtube.com/vi/";
             String url;
@@ -209,6 +236,18 @@ public class DetailFragment extends Fragment {
             Intent intent=new Intent(Intent.ACTION_VIEW,
                     Uri.parse("http://www.youtube.com/watch?v="+id));
             startActivity(intent);
+        }
+    }
+
+
+    private void favButtonHandler(ImageView favButton){
+        String tag = (String) favButton.getTag();
+        if(tag.equals("off")){
+            favButton.setImageResource(R.drawable.favourite_on);
+            favButton.setTag("on");
+        } else{
+            favButton.setImageResource(R.drawable.favourite_off);
+            favButton.setTag("off");
         }
     }
 }

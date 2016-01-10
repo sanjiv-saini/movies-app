@@ -6,7 +6,7 @@ import android.os.Parcelable;
 /**
  * Created by sanju singh on 12/11/2015.
  */
-public class Movie implements Parcelable{
+public class Movie implements Parcelable {
     private Long id;
     private String title;
     private String overview;
@@ -14,16 +14,6 @@ public class Movie implements Parcelable{
     private String release_date;
     private Double vote_average;
     private String backdrop_path;
-
-    public Movie(Long id, String title, String overview, String release_date, Double vote_average, String poster_path, String backdrop_path){
-        this.id = id;
-        this.title= title;
-        this.overview = overview;
-        this.poster_path = poster_path;
-        this.vote_average = vote_average;
-        this.release_date = release_date;
-        this.backdrop_path = backdrop_path;
-    }
 
     public void setId(Long id) {
         this.id = id;
@@ -45,9 +35,7 @@ public class Movie implements Parcelable{
         this.release_date = release_date;
     }
 
-    public void setVote_average(Double vote_average) {
-        this.vote_average = vote_average;
-    }
+    public void setVote_average(Double vote_average) { this.vote_average = vote_average;  }
 
     public void setBackdrop_path(String backdrop_path) {
         this.backdrop_path = backdrop_path;

@@ -22,6 +22,6 @@ public interface ApiService {
     @GET("movie/{id}/videos")
     Call<Data<Trailers>> getTrailers(@Path("id") Long movieId, @Query("api_key") String apiKey);
 
-    @GET("/discover/movie")
+    @GET("discover/movie")
     Call<Data<Movie>> getMovies(@Query("sort_by") String sortBy, @Query("api_key") String apiKey);
 }

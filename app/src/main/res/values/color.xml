@@ -3,5 +3,7 @@
     <color name="black">#000000</color>
     <color name="action_bar">#222222</color>
     <color name="grey">#7F7F7F</color>
+    <color name="floating_action_button_color">#FFA000</color>
+
     7F7F7F
 </resources>

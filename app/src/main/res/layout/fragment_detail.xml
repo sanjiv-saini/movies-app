@@ -10,87 +10,155 @@
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:paddingBottom="@dimen/activity_vertical_margin"
             android:orientation="vertical">
+
+            <android.support.v7.widget.CardView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content">
 
             <RelativeLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_margin="0dp">
 
+
                 <ImageView
                     android:layout_width="match_parent"
-                    android:layout_height="150dp"
+                    android:layout_height="wrap_content"
                     android:id="@+id/backdropView"
-                    android:contentDescription="@string/detail_view_thumbnail_desc"/>
+                    android:adjustViewBounds="true"
+                    android:src="@drawable/backdrop"
+                    android:contentDescription="@string/detail_view_thumbnail_desc" />
 
-
-            <LinearLayout
-                android:orientation="horizontal"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_gravity="center"
-                android:layout_marginTop="100dp"
-                android:layout_marginBottom="@dimen/detailview_layout_margin">
-
-                <ImageView
-                        android:layout_width="@dimen/thumbnail_width"
-                        android:layout_height="@dimen/thumbnail_height"
-                        android:id="@+id/thumbnailView"
-                        android:layout_weight="0"
-                        android:contentDescription="@string/detail_view_thumbnail_desc"
-                    android:layout_marginLeft="30dp" />
-
-
-                <LinearLayout
-                    android:orientation="vertical"
+                <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_gravity="center_vertical"
-                    android:layout_marginLeft="@dimen/movie_details_left_margin"
-                    android:layout_weight="1">
+                    android:textAppearance="?android:attr/textAppearanceLarge"
+                    android:id="@+id/titleView"
+                    android:text="Spectre"
+                    android:textColor="#ffffffff"
+                    android:textSize="30sp"
+                    android:layout_centerHorizontal="true"
+                    android:layout_centerVertical="true"/>
 
-                    <TextView
-                        android:layout_width="match_parent"
-                        android:layout_height="match_parent"
-                        android:textAppearance="?android:attr/textAppearanceMedium"
-                        android:textSize="@dimen/rating_text_size"
-                        android:id="@+id/ratingView"/>
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_alignBottom="@+id/backdropView"
+                    android:gravity="right"
+                    android:orientation="horizontal"
+                    android:background="#78010101">
 
-                    <TextView
-                        android:layout_width="match_parent"
-                        android:layout_height="match_parent"
-                        android:textAppearance="?android:attr/textAppearanceMedium"
-                        android:id="@+id/releaseDateView"/>
+                <ImageView
+                    android:id="@+id/shareButton"
+                    android:layout_height="wrap_content"
+                    android:layout_width="wrap_content"
+                    android:src="@drawable/ic_share_white_18dp"
+                    android:layout_marginRight="20dp"
+                    android:padding="5dp"
+                    android:clickable="true"
+                    android:focusable="false" />
+
+
+                <ImageView
+                    android:id="@+id/favouriteButton"
+                    android:layout_height="wrap_content"
+                    android:layout_width="wrap_content"
+                    android:src="@drawable/favourite_off"
+                    android:padding="5dp"
+                    android:clickable="true"
+                    android:focusable="false"
+                    android:layout_marginEnd="10dp"/>
 
                 </LinearLayout>
 
-            </LinearLayout>
-
             </RelativeLayout>
 
-            <TextView
+            </android.support.v7.widget.CardView>
+
+            <android.support.v7.widget.CardView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:textAppearance="?android:attr/textAppearanceLarge"
-                android:id="@+id/titleView"
-                />
+                android:layout_marginTop="10dp">
 
-            <TextView
+            <LinearLayout
+                android:layout_height="wrap_content"
+                android:layout_width="match_parent"
+                android:orientation="horizontal"
+                android:padding="15dp">
+
+                <ImageView
+                    android:layout_height="wrap_content"
+                    android:layout_width="wrap_content"
+                    android:src="@drawable/ic_date_range_black_18dp"
+                    />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textAppearance="?android:attr/textAppearanceSmall"
+                    android:id="@+id/releaseDateView"
+                    android:layout_weight="1"
+                    android:layout_gravity="center_vertical"/>
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textAppearance="?android:attr/textAppearanceSmall"
+                    android:id="@+id/ratingView"
+                    android:layout_weight="0"
+                    android:layout_gravity="center_vertical"/>
+
+                <ImageView
+                    android:layout_height="wrap_content"
+                    android:layout_width="wrap_content"
+                    android:src="@drawable/ic_star_rate_black_18dp"
+                    android:layout_weight="0"/>
+
+            </LinearLayout>
+
+            </android.support.v7.widget.CardView>
+
+            <android.support.v7.widget.CardView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:textAppearance="?android:attr/textAppearanceSmall"
-                android:id="@+id/overviewField"
-             />
+                android:layout_marginTop="10dp">
 
-        <LinearLayout
+            <LinearLayout
+                android:layout_height="wrap_content"
+                android:layout_width="match_parent"
+                android:orientation="vertical"
+                android:padding="20dp">
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:textAppearance="?android:attr/textAppearanceLarge"
+                    android:text="Overview" />
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:id="@+id/overviewField"
+                 />
+
+
+             </LinearLayout>
+
+            </android.support.v7.widget.CardView>
+
+            <android.support.v7.widget.CardView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="10dp">
+
+            <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="vertical"
                 android:layout_gravity="center"
                 android:id="@+id/trailerLayout"
-                android:layout_marginTop="15dp"
-                android:padding="10dp">
+                android:padding="20dp">
 
                 <TextView
                     android:layout_width="match_parent"
@@ -100,23 +168,30 @@
                     />
 
                 <TextView
-                    android:layout_width="match_parent"
+                    android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:textAppearance="?android:attr/textAppearanceMedium"
-                    android:gravity="center"
+                    android:textAppearance="?android:attr/textAppearanceSmall"
+                    android:layout_gravity="center_horizontal"
                     android:id="@+id/trailerStatus"
                 />
 
-        </LinearLayout>
+             </LinearLayout>
 
-        <LinearLayout
+        </android.support.v7.widget.CardView>
+
+    <android.support.v7.widget.CardView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="10dp">
+
+
+    <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical"
             android:layout_gravity="center"
             android:id="@+id/reviewLayout"
-            android:padding="10dp"
-            android:layout_marginTop="15dp">
+            android:padding="20dp">
 
             <TextView
                 android:layout_width="match_parent"
@@ -126,16 +201,19 @@
              />
 
             <TextView
-                android:layout_width="match_parent"
+                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:textAppearance="?android:attr/textAppearanceMedium"
+                android:textAppearance="?android:attr/textAppearanceSmall"
+                android:layout_gravity="center_horizontal"
                 android:id="@+id/reviewStatus"
-                android:gravity="center"
                 />
 
         </LinearLayout>
 
-    </LinearLayout>
+    </android.support.v7.widget.CardView>
+
+
+        </LinearLayout>
 
 </ScrollView>
 

@@ -23,6 +23,7 @@ import com.sanjusingh.movies.retrofit.RestClient;
 import com.sanjusingh.movies.retrofit.model.Data;
 import com.sanjusingh.movies.retrofit.model.Movie;
 
+import java.io.IOException;
 import java.util.ArrayList;
 
 import retrofit.Call;
@@ -88,10 +89,11 @@ public class PosterFragment extends Fragment {
         super.onStart();
 
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(getActivity());
-        String  moviesOrder= prefs.getString(getString(R.string.pref_sort_criteria_key), getString(R.string.pref_criteria_most_popular));
+        String  moviesOrder = prefs.getString(getString(R.string.pref_sort_criteria_key), getString(R.string.pref_criteria_most_popular));
 
-
-        if(isConnected()) {
+        if(moviesOrder.equals("favourites")){
+           // showFavouriteMovies();
+        } else if(isConnected()) {
             if (!sortCriteria.equals(moviesOrder)) {
                 sortCriteria = moviesOrder;
                 imageAdapter.clear();
@@ -145,13 +147,21 @@ public class PosterFragment extends Fragment {
 
 
                 } else{
-                    Log.d(LOG_TAG, "Problem in parsing JSON");
+                    try {
+                        String str = response.errorBody().string();
+                        Log.d(LOG_TAG, "Problem in parsing JSON" + str);
+
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+
                 }
             }
 
             @Override
             public void onFailure(Throwable t) {
-
+                Log.v(LOG_TAG, t.getMessage() +"  ");
+                t.printStackTrace();
             }
         });
     }
