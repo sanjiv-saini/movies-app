@@ -15,6 +15,8 @@ public class Movie implements Parcelable {
     private Double vote_average;
     private String backdrop_path;
 
+    public Movie(){}
+
     public void setId(Long id) {
         this.id = id;
     }

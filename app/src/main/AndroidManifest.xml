@@ -36,6 +36,10 @@
                 android:name="android.support.PARENT_ACTIVITY"
                 android:value="com.sanjusingh.movies.MainActivity" />
         </activity>
+        <provider
+            android:name=".db.MovieProvider"
+            android:authorities="com.sanjusingh.movies" />
+
     </application>
 
 </manifest>

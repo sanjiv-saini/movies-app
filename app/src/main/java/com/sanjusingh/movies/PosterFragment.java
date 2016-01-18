@@ -3,21 +3,24 @@ package com.sanjusingh.movies;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.database.Cursor;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
+import android.support.v4.app.LoaderManager;
+import android.support.v4.content.CursorLoader;
+import android.support.v4.content.Loader;
 import android.util.Log;
-import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.GridView;
-import android.widget.Toast;
 
+import com.sanjusingh.movies.db.MoviesContract;
 import com.sanjusingh.movies.retrofit.ApiService;
 import com.sanjusingh.movies.retrofit.RestClient;
 import com.sanjusingh.movies.retrofit.model.Data;
@@ -34,12 +37,13 @@ import retrofit.Retrofit;
 /**
  * Created by sanju singh on 12/11/2015.
  */
-public class PosterFragment extends Fragment {
+public class PosterFragment extends Fragment implements LoaderManager.LoaderCallbacks<Cursor>{
 
     private final String LOG_TAG= PosterFragment.class.getSimpleName();
     private ImageAdapter imageAdapter = null;
     private ArrayList<Movie> movieList = null;
-    private String sortCriteria = "popularity.desc";
+    private final int Movie_loader = 0;
+    public static boolean prefChanged = false; // modified from settingsActivity
 
     public PosterFragment() {
     }
@@ -49,8 +53,6 @@ public class PosterFragment extends Fragment {
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         if(savedInstanceState != null){
-            sortCriteria = savedInstanceState.getString("sortType");
-
             if(savedInstanceState.containsKey("movies"))
                 movieList = savedInstanceState.getParcelableArrayList("movies");
         }
@@ -89,24 +91,21 @@ public class PosterFragment extends Fragment {
         super.onStart();
 
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(getActivity());
-        String  moviesOrder = prefs.getString(getString(R.string.pref_sort_criteria_key), getString(R.string.pref_criteria_most_popular));
+        String moviesOrder = prefs.getString(getString(R.string.pref_sort_criteria_key),
+                getString(R.string.pref_criteria_most_popular));
 
-        if(moviesOrder.equals("favourites")){
-           // showFavouriteMovies();
-        } else if(isConnected()) {
-            if (!sortCriteria.equals(moviesOrder)) {
-                sortCriteria = moviesOrder;
-                imageAdapter.clear();
-                updateMovies();
-            } else if (movieList == null) {
-                updateMovies();
+        if (movieList == null || prefChanged) {
+
+            if (!isConnected() || moviesOrder.equals("favourites")) {
+                getLoaderManager().initLoader(Movie_loader, null, this);
+            } else {
+                getMovieFromApi(moviesOrder);
             }
-        } else{
-            Toast toast = Toast.makeText(getActivity()," Check you connection and try again", Toast.LENGTH_SHORT);
-            toast.setGravity(Gravity.CENTER, 0, 0);
-            toast.show();
+
+            prefChanged = false;
         }
     }
+
 
     private boolean isConnected(){
         ConnectivityManager cm = (ConnectivityManager)getActivity().getSystemService(Context.CONNECTIVITY_SERVICE);
@@ -123,12 +122,11 @@ public class PosterFragment extends Fragment {
         {
             outState.putParcelableArrayList("movies", movieList);
         }
-        outState.putString("sortType", sortCriteria);
         super.onSaveInstanceState(outState);
     }
 
 
-    public void updateMovies(){
+    public void getMovieFromApi(String sortCriteria){
 
         ApiService apiService = RestClient.getApiService();
         Call<Data<Movie>> call = apiService.getMovies(sortCriteria, BuildConfig.THE_MOVIE_DB_API_KEY);
@@ -140,6 +138,7 @@ public class PosterFragment extends Fragment {
                 if(data != null){
                     if(data.getResults().size() > 0){
                         movieList = data.getResults();
+                        imageAdapter.clear();
                         imageAdapter.addAll(movieList);
                     } else{
                         Log.v(LOG_TAG, "No Movies");
@@ -165,4 +164,61 @@ public class PosterFragment extends Fragment {
             }
         });
     }
+
+    @Override
+    public Loader<Cursor> onCreateLoader(int id, Bundle args) {
+        String[] projections = {
+                MoviesContract.MovieEntry._ID,
+                MoviesContract.MovieEntry.COLUMN_TITLE,
+                MoviesContract.MovieEntry.COLUMN_RELEASE_DATE,
+                MoviesContract.MovieEntry.COLUMN_VOTE_AVERAGE,
+                MoviesContract.MovieEntry.COLUMN_OVERVIEW,
+                MoviesContract.MovieEntry.COLUMN_POSTER_PATH,
+                MoviesContract.MovieEntry.COLUMN_BACKDROP_PATH
+        };
+
+        return new CursorLoader(getActivity(),
+                MoviesContract.MovieEntry.CONTENT_URI,
+                projections,
+                null,
+                null,
+                null
+        );
+    }
+
+
+    @Override
+    public void onLoadFinished(Loader<Cursor> loader, Cursor data) {
+        int _ID = 0;
+        int COL_TITLE = 1;
+        int COL_RELEASE_DATE = 2;
+        int COL_VOTE_AVERAGE = 3;
+        int COL_OVERVIEW = 4;
+        int COL_POSTER_PATH = 5;
+        int COL_BACKDROP_PATH = 6;
+
+        if(data.moveToFirst()){
+            movieList = new ArrayList<Movie>();
+
+            do{
+                Movie movie = new Movie();
+                movie.setId(data.getLong(_ID));
+                movie.setTitle(data.getString(COL_TITLE));
+                movie.setRelease_date(data.getString(COL_RELEASE_DATE));
+                movie.setVote_average(data.getDouble(COL_VOTE_AVERAGE));
+                movie.setOverview(data.getString(COL_OVERVIEW));
+                movie.setPoster_path(data.getString(COL_POSTER_PATH));
+                movie.setBackdrop_path(data.getString(COL_BACKDROP_PATH));
+
+                movieList.add(movie);
+            }while(data.moveToNext());
+
+            imageAdapter.clear();
+            imageAdapter.addAll(movieList);
+        }
+    }
+
+    @Override
+    public void onLoaderReset(Loader<Cursor> loader) {}
+
 }

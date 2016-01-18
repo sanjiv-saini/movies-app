@@ -1,8 +1,10 @@
 package com.sanjusingh.movies;
 
 import android.content.ActivityNotFoundException;
+import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
+import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
@@ -14,6 +16,7 @@ import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
+import com.sanjusingh.movies.db.MoviesContract;
 import com.sanjusingh.movies.retrofit.ApiService;
 import com.sanjusingh.movies.retrofit.RestClient;
 import com.sanjusingh.movies.retrofit.model.Data;
@@ -41,6 +44,9 @@ public class DetailFragment extends Fragment {
     private ApiService apiService = null;
     private Context context;
     private List<Trailers> trailersList;
+    private Movie selectedMovie = null;
+    private boolean wait = false;
+
 
     public DetailFragment() {
     }
@@ -49,7 +55,6 @@ public class DetailFragment extends Fragment {
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
 
-        Movie selectedMovie = null;
         String imageBaseUrl = "http://image.tmdb.org/t/p/";
         myInflater = inflater;
         rootView = inflater.inflate(R.layout.fragment_detail, container, false);
@@ -77,18 +82,35 @@ public class DetailFragment extends Fragment {
             ratingView.setText(selectedMovie.getVote_average().toString());
             releaseDateView.setText(selectedMovie.getRelease_date());
             overview.setText(selectedMovie.getOverview());
-            Picasso.with(getActivity()).load(backdropUrl).into(backdropView);
+            Picasso.with(getActivity()).load(backdropUrl).placeholder(R.drawable.backdrop).into(backdropView);
         }
 
+        //make it async query
+        String id = selectedMovie.getId().toString();
+        Cursor cursor = context.getContentResolver().query(MoviesContract.MovieEntry.CONTENT_URI,
+                null,
+                MoviesContract.MovieEntry._ID + "= ?",
+                new String[]{id},
+                null);
+
         final ImageView favButton = (ImageView) rootView.findViewById(R.id.favouriteButton);
-        favButton.setTag("off");
-        favButton.setImageResource(R.drawable.favourite_off);
+        if(cursor.moveToNext()){
+            favButton.setImageResource(R.drawable.favourite_on);
+            favButton.setTag("on");
+        }else{
+            favButton.setImageResource(R.drawable.favourite_off);
+            favButton.setTag("off");
+        }
+
         favButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                favButtonHandler(favButton);
+                if(!wait){
+                    favButtonHandler(favButton);
+                }
             }
         });
+
 
         //share first trailer url through intent
         final ImageView shareButton = (ImageView) rootView.findViewById(R.id.shareButton);
@@ -242,12 +264,34 @@ public class DetailFragment extends Fragment {
 
     private void favButtonHandler(ImageView favButton){
         String tag = (String) favButton.getTag();
+
+        wait = true;
+
         if(tag.equals("off")){
+
+            // run query in async thread
+            ContentValues movieValues = new ContentValues();
+
+            movieValues.put(MoviesContract.MovieEntry._ID, selectedMovie.getId());
+            movieValues.put(MoviesContract.MovieEntry.COLUMN_TITLE, selectedMovie.getTitle());
+            movieValues.put(MoviesContract.MovieEntry.COLUMN_RELEASE_DATE, selectedMovie.getRelease_date());
+            movieValues.put(MoviesContract.MovieEntry.COLUMN_VOTE_AVERAGE, selectedMovie.getVote_average());
+            movieValues.put(MoviesContract.MovieEntry.COLUMN_OVERVIEW, selectedMovie.getOverview());
+            movieValues.put(MoviesContract.MovieEntry.COLUMN_POSTER_PATH, selectedMovie.getPoster_path());
+            movieValues.put(MoviesContract.MovieEntry.COLUMN_BACKDROP_PATH, selectedMovie.getBackdrop_path());
+
+            context.getContentResolver().insert(MoviesContract.MovieEntry.CONTENT_URI, movieValues);
             favButton.setImageResource(R.drawable.favourite_on);
             favButton.setTag("on");
         } else{
+            //run query in async thread
+            String id = selectedMovie.getId().toString();
+            context.getContentResolver().delete(MoviesContract.MovieEntry.CONTENT_URI, MoviesContract.MovieEntry._ID + "= ?", new String[]{id});
+
             favButton.setImageResource(R.drawable.favourite_off);
             favButton.setTag("off");
         }
+
+        wait = false;
     }
 }

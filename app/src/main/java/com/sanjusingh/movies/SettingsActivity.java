@@ -45,6 +45,9 @@ public class SettingsActivity extends PreferenceActivity {
             } else {
               preference.setSummary(stringValue);
             }
+
+            PosterFragment.prefChanged = true;
+
             return true;
         }
     };
@@ -57,6 +60,9 @@ public class SettingsActivity extends PreferenceActivity {
                 PreferenceManager
                         .getDefaultSharedPreferences(preference.getContext())
                         .getString(preference.getKey(), ""));
+
+        PosterFragment.prefChanged = false;
+
     }
 
     @Override
