@@ -7,6 +7,7 @@ import android.content.Intent;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
+import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -15,6 +16,7 @@ import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.sanjusingh.movies.db.MoviesContract;
 import com.sanjusingh.movies.retrofit.ApiService;
@@ -26,7 +28,7 @@ import com.sanjusingh.movies.retrofit.model.Trailers;
 import com.squareup.okhttp.OkHttpClient;
 import com.squareup.picasso.Picasso;
 
-import java.util.List;
+import java.util.ArrayList;
 
 import retrofit.Call;
 import retrofit.Callback;
@@ -43,12 +45,38 @@ public class DetailFragment extends Fragment {
     private View rootView;
     private ApiService apiService = null;
     private Context context;
-    private List<Trailers> trailersList;
+    private ArrayList<Trailers> trailersList = null;
+    private ArrayList<Reviews> reviewsList = null;
+
     private Movie selectedMovie = null;
     private boolean wait = false;
+    public static final String DETAIL_KEY = "myMovie";
 
 
     public DetailFragment() {
+    }
+
+    @Override
+    public void onSaveInstanceState(Bundle outState) {
+        if(trailersList != null){
+            outState.putParcelableArrayList("trailers", trailersList);
+        }
+        if(reviewsList != null){
+            outState.putParcelableArrayList("reviews", reviewsList);
+        }
+        super.onSaveInstanceState(outState);
+    }
+
+    @Override
+    public void onCreate(@Nullable Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        if(savedInstanceState != null){
+            if(savedInstanceState.containsKey("trailers"))
+                trailersList = savedInstanceState.getParcelableArrayList("trailers");
+
+            if(savedInstanceState.containsKey("reviews"))
+                reviewsList = savedInstanceState.getParcelableArrayList("reviews");
+        }
     }
 
     @Override
@@ -57,74 +85,87 @@ public class DetailFragment extends Fragment {
 
         String imageBaseUrl = "http://image.tmdb.org/t/p/";
         myInflater = inflater;
-        rootView = inflater.inflate(R.layout.fragment_detail, container, false);
         context = getActivity();
+        rootView = null;
 
-        Intent intent = getActivity().getIntent();
-        if((intent != null) && intent.hasExtra("movie")){
-            selectedMovie = intent.getExtras().getParcelable("movie");
+        Bundle arguments = getArguments();
+        if(arguments !=null){
+            selectedMovie = arguments.getParcelable(DETAIL_KEY);
         }
 
-        apiService = RestClient.getApiService();
-        fetchReviews(selectedMovie.getId());
-        fetchTrailers(selectedMovie.getId());
-
-        TextView titleView = (TextView) rootView.findViewById(R.id.titleView);
-        TextView releaseDateView = (TextView) rootView.findViewById(R.id.releaseDateView);
-        TextView ratingView = (TextView) rootView.findViewById(R.id.ratingView);
-        TextView overview = (TextView) rootView.findViewById(R.id.overviewField);
-        ImageView backdropView = (ImageView) rootView.findViewById(R.id.backdropView);
-
-        String backdropUrl = imageBaseUrl + "w342/" + selectedMovie.getBackdrop_path();
-
         if(selectedMovie != null){
+
+            rootView = inflater.inflate(R.layout.fragment_detail, container, false);
+
+            apiService = RestClient.getApiService();
+
+            if(trailersList != null){
+                displayTrailers();
+            }else{
+                fetchTrailers(selectedMovie.getId());
+            }
+
+            if(reviewsList !=null){
+                displayReviews();
+            }else{
+                fetchReviews(selectedMovie.getId());
+            }
+
+            TextView titleView = (TextView) rootView.findViewById(R.id.titleView);
+            TextView releaseDateView = (TextView) rootView.findViewById(R.id.releaseDateView);
+            TextView ratingView = (TextView) rootView.findViewById(R.id.ratingView);
+            TextView overview = (TextView) rootView.findViewById(R.id.overviewField);
+            ImageView backdropView = (ImageView) rootView.findViewById(R.id.backdropView);
+
+            String backdropUrl = imageBaseUrl + "w342/" + selectedMovie.getBackdrop_path();
             titleView.setText(selectedMovie.getTitle());
             ratingView.setText(selectedMovie.getVote_average().toString());
             releaseDateView.setText(selectedMovie.getRelease_date());
             overview.setText(selectedMovie.getOverview());
             Picasso.with(getActivity()).load(backdropUrl).placeholder(R.drawable.backdrop).into(backdropView);
-        }
 
-        //make it async query
-        String id = selectedMovie.getId().toString();
-        Cursor cursor = context.getContentResolver().query(MoviesContract.MovieEntry.CONTENT_URI,
-                null,
-                MoviesContract.MovieEntry._ID + "= ?",
-                new String[]{id},
-                null);
+            String id = selectedMovie.getId().toString();
+            Cursor cursor = context.getContentResolver().query(MoviesContract.MovieEntry.CONTENT_URI,
+                    null,
+                    MoviesContract.MovieEntry._ID + "= ?",
+                    new String[]{id},
+                    null);
 
-        final ImageView favButton = (ImageView) rootView.findViewById(R.id.favouriteButton);
-        if(cursor.moveToNext()){
-            favButton.setImageResource(R.drawable.favourite_on);
-            favButton.setTag("on");
-        }else{
-            favButton.setImageResource(R.drawable.favourite_off);
-            favButton.setTag("off");
-        }
+            final ImageView favButton = (ImageView) rootView.findViewById(R.id.favouriteButton);
+            if(cursor.moveToNext()){
+                favButton.setImageResource(R.drawable.favourite_on);
+                favButton.setTag("on");
+            }else{
+                favButton.setImageResource(R.drawable.favourite_off);
+                favButton.setTag("off");
+            }
 
-        favButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                if(!wait){
-                    favButtonHandler(favButton);
+            favButton.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    if(!wait){
+                        favButtonHandler(favButton);
+                    }
                 }
-            }
-        });
+            });
 
-
-        //share first trailer url through intent
-        final ImageView shareButton = (ImageView) rootView.findViewById(R.id.shareButton);
-        shareButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                startActivity(Intent.createChooser(createShareVideoIntent(), "Share via"));
-            }
-        });
-
+            //share first trailer url through intent
+            final ImageView shareButton = (ImageView) rootView.findViewById(R.id.shareButton);
+            shareButton.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    if(trailersList != null && trailersList.size() > 0){
+                        startActivity(Intent.createChooser(createShareVideoIntent(), "Share via"));
+                    }else{
+                        Toast.makeText(context,"No Trailer To Share", Toast.LENGTH_SHORT).show();
+                    }
+                }
+            });
+        }
 
         return rootView;
-
     }
+
 
     private void fetchReviews(Long movieId){
 
@@ -138,11 +179,10 @@ public class DetailFragment extends Fragment {
             @Override
               public void onResponse(retrofit.Response<Data<Reviews>> response, Retrofit retrofit) {
                 Data<Reviews> data = response.body();
-                List<Reviews> reviewsList = null;
                 if(data != null){
                     reviewsList = data.getResults();
                     if(reviewsList.size() > 0){
-                        displayReviews(reviewsList);
+                        displayReviews();
                     } else{
                         statusText.setText("No Reviews");
                     }
@@ -206,7 +246,7 @@ public class DetailFragment extends Fragment {
         return intent;
     }
 
-    private void displayReviews(List<Reviews> reviewsList){
+    private void displayReviews(){
         if(reviewsList != null) {
             LinearLayout reviewLayout = (LinearLayout) rootView.findViewById(R.id.reviewLayout);
             for (Reviews review : reviewsList) {

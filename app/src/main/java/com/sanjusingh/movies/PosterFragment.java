@@ -1,12 +1,13 @@
 package com.sanjusingh.movies;
 
 import android.content.Context;
-import android.content.Intent;
 import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Message;
 import android.preference.PreferenceManager;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
@@ -19,6 +20,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.GridView;
+import android.widget.Toast;
 
 import com.sanjusingh.movies.db.MoviesContract;
 import com.sanjusingh.movies.retrofit.ApiService;
@@ -30,7 +32,6 @@ import java.io.IOException;
 import java.util.ArrayList;
 
 import retrofit.Call;
-import retrofit.Callback;
 import retrofit.Response;
 import retrofit.Retrofit;
 
@@ -44,6 +45,20 @@ public class PosterFragment extends Fragment implements LoaderManager.LoaderCall
     private ArrayList<Movie> movieList = null;
     private final int Movie_loader = 0;
     public static boolean prefChanged = false; // modified from settingsActivity
+
+    Handler handler = new Handler()  {
+        @Override
+        public void handleMessage(Message msg) {
+            if(msg.what == 2) {
+                ((PosterFragment.Callback) getActivity()).showTwoPaneMovieDetail(movieList.get(0));
+            }
+        }
+    };
+
+    public interface Callback{
+        public void onItemSelected(Movie selectMovie);
+        public void showTwoPaneMovieDetail(Movie movie);
+    }
 
     public PosterFragment() {
     }
@@ -77,11 +92,14 @@ public class PosterFragment extends Fragment implements LoaderManager.LoaderCall
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
                 Movie selectedMovie = imageAdapter.getItem(position);
 
-                Intent intent = new Intent(getActivity(), DetailActivity.class);
-                intent.putExtra("movie", selectedMovie);
-                startActivity(intent);
+                ((Callback) getActivity())
+                        .onItemSelected(selectedMovie);
             }
         });
+
+        if(!isConnected()){
+            Toast.makeText(getActivity(), "No Network Connection", Toast.LENGTH_SHORT).show();
+        }
 
         return rootView;
     }
@@ -94,18 +112,24 @@ public class PosterFragment extends Fragment implements LoaderManager.LoaderCall
         String moviesOrder = prefs.getString(getString(R.string.pref_sort_criteria_key),
                 getString(R.string.pref_criteria_most_popular));
 
+        //remove movie details in two Pane when pref changed
+        if(prefChanged && MainActivity.mTwoPane){
+            ((Callback)getActivity()).showTwoPaneMovieDetail(null);
+        }
+
+
         if (movieList == null || prefChanged) {
 
             if (!isConnected() || moviesOrder.equals("favourites")) {
                 getLoaderManager().initLoader(Movie_loader, null, this);
             } else {
+                imageAdapter.clear();
                 getMovieFromApi(moviesOrder);
             }
 
             prefChanged = false;
         }
     }
-
 
     private boolean isConnected(){
         ConnectivityManager cm = (ConnectivityManager)getActivity().getSystemService(Context.CONNECTIVITY_SERVICE);
@@ -131,14 +155,18 @@ public class PosterFragment extends Fragment implements LoaderManager.LoaderCall
         ApiService apiService = RestClient.getApiService();
         Call<Data<Movie>> call = apiService.getMovies(sortCriteria, BuildConfig.THE_MOVIE_DB_API_KEY);
 
-        call.enqueue(new Callback<Data<Movie>>() {
+        call.enqueue(new retrofit.Callback<Data<Movie>>() {
             @Override
             public void onResponse(Response<Data<Movie>> response, Retrofit retrofit) {
                 Data<Movie> data = response.body();
                 if(data != null){
                     if(data.getResults().size() > 0){
                         movieList = data.getResults();
-                        imageAdapter.clear();
+                        //show first movie details in detail fragment
+                        if(MainActivity.mTwoPane) {
+                            ((Callback) getActivity()).showTwoPaneMovieDetail(movieList.get(0));
+                        }
+
                         imageAdapter.addAll(movieList);
                     } else{
                         Log.v(LOG_TAG, "No Movies");
@@ -197,10 +225,20 @@ public class PosterFragment extends Fragment implements LoaderManager.LoaderCall
         int COL_POSTER_PATH = 5;
         int COL_BACKDROP_PATH = 6;
 
-        if(data.moveToFirst()){
-            movieList = new ArrayList<Movie>();
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(getActivity());
+        String moviesOrder = prefs.getString(getString(R.string.pref_sort_criteria_key),
+                getString(R.string.pref_criteria_most_popular));
 
-            do{
+
+        if (!isConnected() || moviesOrder.equals("favourites")){
+
+            imageAdapter.clear();
+
+            if(data.moveToFirst()){
+
+                movieList = new ArrayList<Movie>();
+
+                do{
                 Movie movie = new Movie();
                 movie.setId(data.getLong(_ID));
                 movie.setTitle(data.getString(COL_TITLE));
@@ -211,10 +249,14 @@ public class PosterFragment extends Fragment implements LoaderManager.LoaderCall
                 movie.setBackdrop_path(data.getString(COL_BACKDROP_PATH));
 
                 movieList.add(movie);
-            }while(data.moveToNext());
+                }while(data.moveToNext());
 
-            imageAdapter.clear();
-            imageAdapter.addAll(movieList);
+                if (MainActivity.mTwoPane){
+                    handler.sendEmptyMessage(2);
+                }
+
+                imageAdapter.addAll(movieList);
+            }
         }
     }
 
