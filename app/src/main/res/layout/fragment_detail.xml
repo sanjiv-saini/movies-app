@@ -57,7 +57,8 @@
                     android:layout_marginRight="20dp"
                     android:padding="5dp"
                     android:clickable="true"
-                    android:focusable="false" />
+                    android:focusable="false"
+                    android:background="@drawable/button_selector"/>
 
 
                 <ImageView
@@ -68,7 +69,8 @@
                     android:padding="5dp"
                     android:clickable="true"
                     android:focusable="false"
-                    android:layout_marginEnd="10dp"/>
+                    android:layout_marginEnd="10dp"
+                    android:background="@drawable/button_selector"/>
 
                 </LinearLayout>
 

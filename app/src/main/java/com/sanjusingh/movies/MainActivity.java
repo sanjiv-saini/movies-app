@@ -26,6 +26,7 @@ public class MainActivity extends ActionBarActivity implements PosterFragment.Ca
         }else{
             mTwoPane = false;
         }
+
     }
 
 

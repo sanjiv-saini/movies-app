@@ -97,10 +97,6 @@ public class PosterFragment extends Fragment implements LoaderManager.LoaderCall
             }
         });
 
-        if(!isConnected()){
-            Toast.makeText(getActivity(), "No Network Connection", Toast.LENGTH_SHORT).show();
-        }
-
         return rootView;
     }
 
@@ -112,19 +108,36 @@ public class PosterFragment extends Fragment implements LoaderManager.LoaderCall
         String moviesOrder = prefs.getString(getString(R.string.pref_sort_criteria_key),
                 getString(R.string.pref_criteria_most_popular));
 
+
         //remove movie details in two Pane when pref changed
         if(prefChanged && MainActivity.mTwoPane){
             ((Callback)getActivity()).showTwoPaneMovieDetail(null);
         }
 
+        if(!isConnected()){
+            Toast.makeText(getActivity(), "No Network Connection", Toast.LENGTH_SHORT).show();
+        }
+
 
         if (movieList == null || prefChanged) {
 
-            if (!isConnected() || moviesOrder.equals("favourites")) {
+            //change Action Bar title
+            if(moviesOrder.equals("popularity.desc")){
+                getActivity().setTitle("Movies | Most Popular");
+            }else if(moviesOrder.equals("vote_average.desc")){
+                getActivity().setTitle("Movies | Highest Rated");
+            }else if(moviesOrder.equals("favourites")){
+                getActivity().setTitle("Movies | Favourites");
+            }
+
+            // Update Poster
+            if (moviesOrder.equals("favourites")) {
                 getLoaderManager().initLoader(Movie_loader, null, this);
-            } else {
+            } else if(isConnected()) {
                 imageAdapter.clear();
                 getMovieFromApi(moviesOrder);
+            } else{
+                imageAdapter.clear();
             }
 
             prefChanged = false;
@@ -146,6 +159,7 @@ public class PosterFragment extends Fragment implements LoaderManager.LoaderCall
         {
             outState.putParcelableArrayList("movies", movieList);
         }
+
         super.onSaveInstanceState(outState);
     }
 
@@ -230,7 +244,7 @@ public class PosterFragment extends Fragment implements LoaderManager.LoaderCall
                 getString(R.string.pref_criteria_most_popular));
 
 
-        if (!isConnected() || moviesOrder.equals("favourites")){
+        if (moviesOrder.equals("favourites")){
 
             imageAdapter.clear();
 
