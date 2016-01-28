@@ -5,5 +5,9 @@
     <color name="grey">#7F7F7F</color>
     <color name="floating_action_button_color">#FFA000</color>
 
+    <color name="darkOrange">#E65100</color>
+    <color name="lightOrange">#EF6C00</color>
+
+
     7F7F7F
 </resources>

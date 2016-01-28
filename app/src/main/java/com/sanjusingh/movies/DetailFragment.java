@@ -1,9 +1,12 @@
 package com.sanjusingh.movies;
 
+import android.app.LoaderManager;
 import android.content.ActivityNotFoundException;
 import android.content.ContentValues;
 import android.content.Context;
+import android.content.CursorLoader;
 import android.content.Intent;
+import android.content.Loader;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
@@ -37,7 +40,7 @@ import retrofit.Retrofit;
 /**
  * Created by sanju singh on 12/28/2015.
  */
-public class DetailFragment extends Fragment {
+public class DetailFragment extends Fragment implements LoaderManager.LoaderCallbacks<Cursor>{
 
     private final String LOG_TAG = DetailFragment.class.getSimpleName();
     private OkHttpClient client = new OkHttpClient();
@@ -117,28 +120,19 @@ public class DetailFragment extends Fragment {
             TextView overview = (TextView) rootView.findViewById(R.id.overviewField);
             ImageView backdropView = (ImageView) rootView.findViewById(R.id.backdropView);
 
-            String backdropUrl = imageBaseUrl + "w342/" + selectedMovie.getBackdrop_path();
+
+
+          //  if(selectedMovie.getBackdrop_path() != null){
+                String backdropUrl = imageBaseUrl + "w342/" + selectedMovie.getBackdrop_path();
+                Picasso.with(getActivity()).load(backdropUrl).placeholder(R.drawable.backdrop).into(backdropView);
+           // }
+
             titleView.setText(selectedMovie.getTitle());
             ratingView.setText(selectedMovie.getVote_average().toString());
             releaseDateView.setText(selectedMovie.getRelease_date());
             overview.setText(selectedMovie.getOverview());
-            Picasso.with(getActivity()).load(backdropUrl).placeholder(R.drawable.backdrop).into(backdropView);
-
-            String id = selectedMovie.getId().toString();
-            Cursor cursor = context.getContentResolver().query(MoviesContract.MovieEntry.CONTENT_URI,
-                    null,
-                    MoviesContract.MovieEntry._ID + "= ?",
-                    new String[]{id},
-                    null);
 
             final ImageView favButton = (ImageView) rootView.findViewById(R.id.favouriteButton);
-            if(cursor.moveToNext()){
-                favButton.setImageResource(R.drawable.favourite_on);
-                favButton.setTag("on");
-            }else{
-                favButton.setImageResource(R.drawable.favourite_off);
-                favButton.setTag("off");
-            }
 
             favButton.setOnClickListener(new View.OnClickListener() {
                 @Override
@@ -321,17 +315,48 @@ public class DetailFragment extends Fragment {
             movieValues.put(MoviesContract.MovieEntry.COLUMN_BACKDROP_PATH, selectedMovie.getBackdrop_path());
 
             context.getContentResolver().insert(MoviesContract.MovieEntry.CONTENT_URI, movieValues);
+          //  Toast.makeText(getActivity(),"making favourite", Toast.LENGTH_SHORT).show();
             favButton.setImageResource(R.drawable.favourite_on);
             favButton.setTag("on");
         } else{
             //run query in async thread
             String id = selectedMovie.getId().toString();
             context.getContentResolver().delete(MoviesContract.MovieEntry.CONTENT_URI, MoviesContract.MovieEntry._ID + "= ?", new String[]{id});
+           // Toast.makeText(getActivity(),"Removing favourite", Toast.LENGTH_SHORT).show();
 
             favButton.setImageResource(R.drawable.favourite_off);
             favButton.setTag("off");
         }
 
         wait = false;
+    }
+
+    @Override
+    public Loader<Cursor> onCreateLoader(int id, Bundle args) {
+        String movieId = selectedMovie.getId().toString();
+
+        return new CursorLoader(getActivity(),
+                MoviesContract.MovieEntry.CONTENT_URI,
+                null,
+                MoviesContract.MovieEntry._ID + "= ?",
+                new String[]{movieId},
+                null);
+    }
+
+    @Override
+    public void onLoadFinished(Loader<Cursor> loader, Cursor data) {
+        final ImageView favButton = (ImageView) rootView.findViewById(R.id.favouriteButton);
+        if(data.moveToNext()){
+            favButton.setImageResource(R.drawable.favourite_on);
+            favButton.setTag("on");
+        }else{
+            favButton.setImageResource(R.drawable.favourite_off);
+            favButton.setTag("off");
+        }
+    }
+
+    @Override
+    public void onLoaderReset(Loader<Cursor> loader) {
+
     }
 }

@@ -33,9 +33,12 @@ public class ImageAdapter extends ArrayAdapter<Movie> {
         }
 
         Movie movie = getItem(position);
-        String url = imageBaseUrl + "w185/" + movie.getPoster_path();
 
+
+        String url = imageBaseUrl + "w185/" + movie.getPoster_path();
         Picasso.with(context).load(url).placeholder(R.drawable.placeholder).error(R.drawable.error).into(view);
+
+
         return view;
     }
 }

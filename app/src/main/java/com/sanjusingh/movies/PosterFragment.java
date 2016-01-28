@@ -80,6 +80,7 @@ public class PosterFragment extends Fragment implements LoaderManager.LoaderCall
 
         if(movieList != null) {
             imageAdapter = new ImageAdapter(getActivity(), movieList);
+
         } else{
             imageAdapter = new ImageAdapter(getActivity(), new ArrayList<Movie>());
         }
@@ -101,6 +102,16 @@ public class PosterFragment extends Fragment implements LoaderManager.LoaderCall
     }
 
     @Override
+    public void onActivityCreated(@Nullable Bundle savedInstanceState) {
+        super.onActivityCreated(savedInstanceState);
+        if(movieList != null) {
+            if(MainActivity.mTwoPane){
+                ((Callback)getActivity()).showTwoPaneMovieDetail(movieList.get(0));
+            }
+        }
+    }
+
+    @Override
     public void onStart() {
         super.onStart();
 
@@ -118,17 +129,16 @@ public class PosterFragment extends Fragment implements LoaderManager.LoaderCall
             Toast.makeText(getActivity(), "No Network Connection", Toast.LENGTH_SHORT).show();
         }
 
+        if(moviesOrder.equals("popularity.desc")){
+            getActivity().setTitle("Movies | Most Popular");
+        }else if(moviesOrder.equals("vote_average.desc")){
+            getActivity().setTitle("Movies | Highest Rated");
+        }else if(moviesOrder.equals("favourites")){
+            getActivity().setTitle("Movies | Favourites");
+        }
+
 
         if (movieList == null || prefChanged) {
-
-            //change Action Bar title
-            if(moviesOrder.equals("popularity.desc")){
-                getActivity().setTitle("Movies | Most Popular");
-            }else if(moviesOrder.equals("vote_average.desc")){
-                getActivity().setTitle("Movies | Highest Rated");
-            }else if(moviesOrder.equals("favourites")){
-                getActivity().setTitle("Movies | Favourites");
-            }
 
             // Update Poster
             if (moviesOrder.equals("favourites")) {
@@ -270,6 +280,8 @@ public class PosterFragment extends Fragment implements LoaderManager.LoaderCall
                 }
 
                 imageAdapter.addAll(movieList);
+            } else{
+                Toast.makeText(getActivity(), "No Favourite Movies",Toast.LENGTH_SHORT).show();
             }
         }
     }
