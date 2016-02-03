@@ -12,6 +12,7 @@ import android.support.annotation.LayoutRes;
 import android.support.annotation.Nullable;
 import android.support.v7.app.AppCompatDelegate;
 import android.support.v7.widget.Toolbar;
+import android.view.View;
 
 public class SettingsActivity extends PreferenceActivity {
 
@@ -27,6 +28,12 @@ public class SettingsActivity extends PreferenceActivity {
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         toolbar.setTitleTextColor(0xFFFFFFFF);
         setSupportActionBar(toolbar);
+        toolbar.setNavigationOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                finish();
+            }
+        });
 
         addPreferencesFromResource(R.xml.pref_general);
         bindPreferenceSummaryToValue(findPreference("sort_criteria"));
