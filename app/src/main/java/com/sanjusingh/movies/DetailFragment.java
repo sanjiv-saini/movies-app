@@ -1,17 +1,17 @@
 package com.sanjusingh.movies;
 
-import android.app.LoaderManager;
 import android.content.ActivityNotFoundException;
 import android.content.ContentValues;
 import android.content.Context;
-import android.content.CursorLoader;
 import android.content.Intent;
-import android.content.Loader;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
+import android.support.v4.app.LoaderManager;
+import android.support.v4.content.CursorLoader;
+import android.support.v4.content.Loader;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -28,7 +28,6 @@ import com.sanjusingh.movies.retrofit.model.Data;
 import com.sanjusingh.movies.retrofit.model.Movie;
 import com.sanjusingh.movies.retrofit.model.Reviews;
 import com.sanjusingh.movies.retrofit.model.Trailers;
-import com.squareup.okhttp.OkHttpClient;
 import com.squareup.picasso.Picasso;
 
 import java.util.ArrayList;
@@ -43,16 +42,17 @@ import retrofit.Retrofit;
 public class DetailFragment extends Fragment implements LoaderManager.LoaderCallbacks<Cursor>{
 
     private final String LOG_TAG = DetailFragment.class.getSimpleName();
-    private OkHttpClient client = new OkHttpClient();
     private LayoutInflater myInflater;
     private View rootView;
     private ApiService apiService = null;
     private Context context;
     private ArrayList<Trailers> trailersList = null;
     private ArrayList<Reviews> reviewsList = null;
+    private final int Check_loader = 1;
+    private String favTag = null;
+
 
     private Movie selectedMovie = null;
-    private boolean wait = false;
     public static final String DETAIL_KEY = "myMovie";
 
 
@@ -67,6 +67,9 @@ public class DetailFragment extends Fragment implements LoaderManager.LoaderCall
         if(reviewsList != null){
             outState.putParcelableArrayList("reviews", reviewsList);
         }
+
+        outState.putString("favButtonTag", favTag);
+
         super.onSaveInstanceState(outState);
     }
 
@@ -79,6 +82,10 @@ public class DetailFragment extends Fragment implements LoaderManager.LoaderCall
 
             if(savedInstanceState.containsKey("reviews"))
                 reviewsList = savedInstanceState.getParcelableArrayList("reviews");
+
+            if(savedInstanceState.containsKey("favButtonTag"))
+                favTag = savedInstanceState.getString("favButtonTag");
+
         }
     }
 
@@ -122,10 +129,11 @@ public class DetailFragment extends Fragment implements LoaderManager.LoaderCall
 
 
 
-          //  if(selectedMovie.getBackdrop_path() != null){
+            if(selectedMovie.getBackdrop_path() != null){
                 String backdropUrl = imageBaseUrl + "w342/" + selectedMovie.getBackdrop_path();
                 Picasso.with(getActivity()).load(backdropUrl).placeholder(R.drawable.backdrop).into(backdropView);
-           // }
+            }
+
 
             titleView.setText(selectedMovie.getTitle());
             ratingView.setText(selectedMovie.getVote_average().toString());
@@ -137,9 +145,9 @@ public class DetailFragment extends Fragment implements LoaderManager.LoaderCall
             favButton.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
-                    if(!wait){
-                        favButtonHandler(favButton);
-                    }
+                    favButton.setEnabled(false);
+                    favButtonHandler(favButton);
+                    favButton.setEnabled(true);
                 }
             });
 
@@ -155,11 +163,30 @@ public class DetailFragment extends Fragment implements LoaderManager.LoaderCall
                     }
                 }
             });
+
+
         }
 
         return rootView;
     }
 
+
+    @Override
+    public void onActivityCreated(@Nullable Bundle savedInstanceState) {
+        super.onActivityCreated(savedInstanceState);
+        if(favTag != null){
+            ImageView favButton = (ImageView) rootView.findViewById(R.id.favouriteButton);
+            if(favTag.equals("off")){
+                favButton.setImageResource(R.drawable.favourite_off);
+                favButton.setTag(favTag);
+            }else{
+                favButton.setImageResource(R.drawable.favourite_on);
+                favButton.setTag(favTag);
+            }
+        }else if(selectedMovie!=null){
+            getLoaderManager().initLoader(Check_loader, null, this);
+        }
+    }
 
     private void fetchReviews(Long movieId){
 
@@ -213,8 +240,6 @@ public class DetailFragment extends Fragment implements LoaderManager.LoaderCall
                     } else{
                         statusText.setText("No Trailers");
                     }
-
-
                 } else{
                     statusText.setText("ERROR");
                     Log.d(LOG_TAG, "Problem in parsing JSON");
@@ -297,11 +322,8 @@ public class DetailFragment extends Fragment implements LoaderManager.LoaderCall
 
 
     private void favButtonHandler(ImageView favButton){
-        String tag = (String) favButton.getTag();
 
-        wait = true;
-
-        if(tag.equals("off")){
+        if(favTag.equals("off")){
 
             // run query in async thread
             ContentValues movieValues = new ContentValues();
@@ -314,21 +336,20 @@ public class DetailFragment extends Fragment implements LoaderManager.LoaderCall
             movieValues.put(MoviesContract.MovieEntry.COLUMN_POSTER_PATH, selectedMovie.getPoster_path());
             movieValues.put(MoviesContract.MovieEntry.COLUMN_BACKDROP_PATH, selectedMovie.getBackdrop_path());
 
-            context.getContentResolver().insert(MoviesContract.MovieEntry.CONTENT_URI, movieValues);
-          //  Toast.makeText(getActivity(),"making favourite", Toast.LENGTH_SHORT).show();
+            getActivity().getContentResolver().insert(MoviesContract.MovieEntry.CONTENT_URI, movieValues);
+            favTag = "on";
+            favButton.setTag(favTag);
             favButton.setImageResource(R.drawable.favourite_on);
-            favButton.setTag("on");
         } else{
             //run query in async thread
             String id = selectedMovie.getId().toString();
-            context.getContentResolver().delete(MoviesContract.MovieEntry.CONTENT_URI, MoviesContract.MovieEntry._ID + "= ?", new String[]{id});
-           // Toast.makeText(getActivity(),"Removing favourite", Toast.LENGTH_SHORT).show();
-
+            getActivity().getContentResolver().delete(MoviesContract.MovieEntry.CONTENT_URI,
+                    MoviesContract.MovieEntry._ID + "= ?",
+                    new String[]{id});
+            favTag = "off";
             favButton.setImageResource(R.drawable.favourite_off);
-            favButton.setTag("off");
+            favButton.setTag(favTag);
         }
-
-        wait = false;
     }
 
     @Override
@@ -345,18 +366,18 @@ public class DetailFragment extends Fragment implements LoaderManager.LoaderCall
 
     @Override
     public void onLoadFinished(Loader<Cursor> loader, Cursor data) {
-        final ImageView favButton = (ImageView) rootView.findViewById(R.id.favouriteButton);
+        ImageView favButton = (ImageView) rootView.findViewById(R.id.favouriteButton);
         if(data.moveToNext()){
             favButton.setImageResource(R.drawable.favourite_on);
-            favButton.setTag("on");
+            favTag = "on";
+            favButton.setTag(favTag);
         }else{
             favButton.setImageResource(R.drawable.favourite_off);
-            favButton.setTag("off");
+            favTag = "off";
+            favButton.setTag(favTag);
         }
     }
 
     @Override
-    public void onLoaderReset(Loader<Cursor> loader) {
-
-    }
+    public void onLoaderReset(Loader<Cursor> loader) {}
 }

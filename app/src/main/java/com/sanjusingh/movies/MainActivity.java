@@ -18,11 +18,11 @@ public class MainActivity extends ActionBarActivity implements PosterFragment.Ca
         setContentView(R.layout.activity_main);
         if(findViewById(R.id.movie_details_fragment) != null){
             mTwoPane = true;
-            if(savedInstanceState == null){
-                getSupportFragmentManager().beginTransaction()
-                        .replace(R.id.movie_details_fragment, new DetailFragment())
-                        .commit();
-            }
+         //   if(savedInstanceState == null){
+           //     getSupportFragmentManager().beginTransaction()
+             //           .replace(R.id.movie_details_fragment, new DetailFragment())
+               //         .commit();
+            //}
         }else{
             mTwoPane = false;
         }

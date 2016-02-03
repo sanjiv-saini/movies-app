@@ -19,6 +19,7 @@ public class SettingsActivity extends PreferenceActivity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+
         getDelegate().installViewFactory();
         getDelegate().onCreate(savedInstanceState);
         super.onCreate(savedInstanceState);
@@ -49,8 +50,6 @@ public class SettingsActivity extends PreferenceActivity {
               preference.setSummary(stringValue);
             }
 
-            PosterFragment.prefChanged = true;
-
             return true;
         }
     };
@@ -63,10 +62,7 @@ public class SettingsActivity extends PreferenceActivity {
                 PreferenceManager
                         .getDefaultSharedPreferences(preference.getContext())
                         .getString(preference.getKey(), ""));
-
-        PosterFragment.prefChanged = false;
-
-    }
+        }
 
     @Override
     protected void onPostCreate(Bundle savedInstanceState) {

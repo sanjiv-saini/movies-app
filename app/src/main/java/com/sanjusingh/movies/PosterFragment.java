@@ -44,12 +44,18 @@ public class PosterFragment extends Fragment implements LoaderManager.LoaderCall
     private ImageAdapter imageAdapter = null;
     private ArrayList<Movie> movieList = null;
     private final int Movie_loader = 0;
-    public static boolean prefChanged = false; // modified from settingsActivity
+    private int mPosition = 0;
+    private static final String POSITION_KEY = "moviePosition";
+    private static final String PREF_KEY = "moviePref";
+    private GridView gridView;
+    private String moviePref  = "popularity.desc";
 
-    Handler handler = new Handler()  {
+    private Handler handler = new Handler()  {
         @Override
         public void handleMessage(Message msg) {
-            if(msg.what == 2) {
+            if(msg.what == 1){
+                ((PosterFragment.Callback) getActivity()).showTwoPaneMovieDetail(null);
+            }else if(msg.what == 2) {
                 ((PosterFragment.Callback) getActivity()).showTwoPaneMovieDetail(movieList.get(0));
             }
         }
@@ -70,6 +76,10 @@ public class PosterFragment extends Fragment implements LoaderManager.LoaderCall
         if(savedInstanceState != null){
             if(savedInstanceState.containsKey("movies"))
                 movieList = savedInstanceState.getParcelableArrayList("movies");
+            if(savedInstanceState.containsKey(POSITION_KEY))
+                mPosition = savedInstanceState.getInt(POSITION_KEY);
+            if(savedInstanceState.containsKey(PREF_KEY))
+                moviePref = savedInstanceState.getString(PREF_KEY);
         }
     }
 
@@ -78,6 +88,15 @@ public class PosterFragment extends Fragment implements LoaderManager.LoaderCall
                              Bundle savedInstanceState) {
         View rootView = inflater.inflate(R.layout.fragment_main, container, false);
 
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(getActivity());
+        String moviesOrder = prefs.getString(getString(R.string.pref_sort_criteria_key),
+                getString(R.string.pref_criteria_most_popular));
+
+        if(!moviesOrder.equals(moviePref)){
+            movieList = null;
+            mPosition = 0;
+        }
+
         if(movieList != null) {
             imageAdapter = new ImageAdapter(getActivity(), movieList);
 
@@ -85,14 +104,14 @@ public class PosterFragment extends Fragment implements LoaderManager.LoaderCall
             imageAdapter = new ImageAdapter(getActivity(), new ArrayList<Movie>());
         }
 
-        GridView gridView = (GridView) rootView.findViewById(R.id.gridView);
+        gridView = (GridView) rootView.findViewById(R.id.gridView);
         gridView.setAdapter(imageAdapter);
 
         gridView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
                 Movie selectedMovie = imageAdapter.getItem(position);
-
+                mPosition = position;
                 ((Callback) getActivity())
                         .onItemSelected(selectedMovie);
             }
@@ -106,7 +125,8 @@ public class PosterFragment extends Fragment implements LoaderManager.LoaderCall
         super.onActivityCreated(savedInstanceState);
         if(movieList != null) {
             if(MainActivity.mTwoPane){
-                ((Callback)getActivity()).showTwoPaneMovieDetail(movieList.get(0));
+                gridView.setSelection(mPosition);
+                ((Callback)getActivity()).showTwoPaneMovieDetail(movieList.get(mPosition));
             }
         }
     }
@@ -119,14 +139,14 @@ public class PosterFragment extends Fragment implements LoaderManager.LoaderCall
         String moviesOrder = prefs.getString(getString(R.string.pref_sort_criteria_key),
                 getString(R.string.pref_criteria_most_popular));
 
-
-        //remove movie details in two Pane when pref changed
-        if(prefChanged && MainActivity.mTwoPane){
-            ((Callback)getActivity()).showTwoPaneMovieDetail(null);
-        }
-
-        if(!isConnected()){
-            Toast.makeText(getActivity(), "No Network Connection", Toast.LENGTH_SHORT).show();
+        if(!moviesOrder.equals(moviePref)){
+            movieList = null;
+            mPosition = 0;
+            imageAdapter.clear();
+            if(MainActivity.mTwoPane){
+                ((Callback)getActivity()).showTwoPaneMovieDetail(null);
+            }
+            moviePref = moviesOrder;
         }
 
         if(moviesOrder.equals("popularity.desc")){
@@ -138,19 +158,15 @@ public class PosterFragment extends Fragment implements LoaderManager.LoaderCall
         }
 
 
-        if (movieList == null || prefChanged) {
-
+        if (movieList == null) {
             // Update Poster
             if (moviesOrder.equals("favourites")) {
                 getLoaderManager().initLoader(Movie_loader, null, this);
             } else if(isConnected()) {
-                imageAdapter.clear();
                 getMovieFromApi(moviesOrder);
             } else{
-                imageAdapter.clear();
+                Toast.makeText(getActivity(), "No Network Connection", Toast.LENGTH_SHORT).show();
             }
-
-            prefChanged = false;
         }
     }
 
@@ -169,6 +185,8 @@ public class PosterFragment extends Fragment implements LoaderManager.LoaderCall
         {
             outState.putParcelableArrayList("movies", movieList);
         }
+        outState.putInt(POSITION_KEY, mPosition);
+        outState.putString(PREF_KEY, moviePref);
 
         super.onSaveInstanceState(outState);
     }
@@ -257,10 +275,14 @@ public class PosterFragment extends Fragment implements LoaderManager.LoaderCall
         if (moviesOrder.equals("favourites")){
 
             imageAdapter.clear();
+            mPosition = 0;
+            if(MainActivity.mTwoPane){
+                handler.sendEmptyMessage(1);
+            }
 
             if(data.moveToFirst()){
 
-                movieList = new ArrayList<Movie>();
+                movieList= new ArrayList<Movie>();
 
                 do{
                 Movie movie = new Movie();
@@ -275,11 +297,12 @@ public class PosterFragment extends Fragment implements LoaderManager.LoaderCall
                 movieList.add(movie);
                 }while(data.moveToNext());
 
+                imageAdapter.addAll(movieList);
+
                 if (MainActivity.mTwoPane){
                     handler.sendEmptyMessage(2);
                 }
 
-                imageAdapter.addAll(movieList);
             } else{
                 Toast.makeText(getActivity(), "No Favourite Movies",Toast.LENGTH_SHORT).show();
             }
