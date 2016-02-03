@@ -1,4 +1,4 @@
-# Movies App 1
+# Movies App
 This is an android app which allows user to see popular and highest rated movies.
 
 This app use Picasso, a powerful library that will handle image loading and caching.
